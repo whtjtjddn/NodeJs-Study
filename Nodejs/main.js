@@ -10,36 +10,56 @@ var app = http.createServer(function(request, response) {
 
     if (pathname === '/') {
         if (queryData.id === undefined) {
-            fs.readFile(`data/${queryData.id}`, 'utf8', function(err, description) {
+            fs.readdir('./data', function(error, filelist) {
+                console.log(filelist);
                 var title = 'Home';
                 var description = 'Hello Here is my home';
 
+                var list = '<ul>';
+
+                var i = 0;
+                while (i < filelist.length) {
+                    list = list + `<li><a href="/?id=${filelist[i]}"> ${filelist[i]} </a></li>`;
+                    i++;
+                }
+
+                list = list + '</ul>';
                 var template = `<!doctype html>
-          <html>
-          <head>
-            <title>WEB1 - ${title}</title>
-            <meta charset="utf-8">
-          </head>
-          <body>
-            <h1><a href="/">WEB</a></h1>
-            <ol>
-              <li><a href="/?id=HTML">HTML</a></li>
-              <li><a href="/?id=CSS">CSS</a></li>
-              <li><a href="/?id=JavaScript">JavaScript</a></li>
-            </ol>
-            <h2>${title}</h2>
-            <p>
-            ${description}
-            </p>
-          </body>
-          </html>
-          `;
+              <html>
+              <head>
+              <title>WEB1 - ${title}</title>
+              <meta charset="utf-8">
+              </head>
+              <body>
+              <h1><a href="/">WEB</a></h1>
+              ${list}
+              <h2>${title}</h2>
+              <p>
+              ${description}
+              </p>
+              </body>
+              </html>
+              `;
                 response.writeHead(200);
                 response.end(template);
             });
         } else {
-            fs.readFile(`data/${queryData.id}`, 'utf8', function(err, description) {
-                var template = `<!doctype html>
+            fs.readdir('./data', function(error, filelist) {
+                console.log(filelist);
+                var title = 'Home';
+                var description = 'Hello Here is my home';
+
+                var list = '<ul>';
+
+                var i = 0;
+                while (i < filelist.length) {
+                    list = list + `<li><a href="/?id=${filelist[i]}"> ${filelist[i]} </a></li>`;
+                    i++;
+                }
+
+                list = list + '</ul>';
+                fs.readFile(`data/${queryData.id}`, 'utf8', function(err, description) {
+                    var template = `<!doctype html>
         <html>
         <head>
           <title>WEB1 - ${title}</title>
@@ -47,11 +67,7 @@ var app = http.createServer(function(request, response) {
         </head>
         <body>
           <h1><a href="/">WEB</a></h1>
-          <ol>
-            <li><a href="/?id=HTML">HTML</a></li>
-            <li><a href="/?id=CSS">CSS</a></li>
-            <li><a href="/?id=JavaScript">JavaScript</a></li>
-          </ol>
+          ${list}
           <h2>${title}</h2>
           <p>
           ${description}
@@ -59,8 +75,9 @@ var app = http.createServer(function(request, response) {
         </body>
         </html>
         `;
-                response.writeHead(200);
-                response.end(template);
+                    response.writeHead(200);
+                    response.end(template);
+                });
             });
         }
     } else {
