@@ -2,6 +2,7 @@ var http = require('http');
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
+const https = require('https');
 
 function templateHTML(title, list, body) {
     return `<!doctype html>
@@ -95,6 +96,24 @@ var app = http.createServer(function(request, response) {
                 response.end();
             })
         });
+    } else if (pathname === '/cyphers') {
+        let url = `https://api.neople.co.kr/cy/battleitems?itemName=구원의 이기&wordType=<wordType>&limit=<limit>&q=characterId:<characterId>;slotCode:<slotCode>,rarityCode:<rarityCode>,seasonCode:<seasonCode>&apikey=FnaA38BJKLS69mQ9rDx6vEztIr8fbS3y`
+        const request = https.request(url, (response) => {
+            let data = '';
+
+            response.on('data', (chunk) => {
+                data = data + chunk.toString();
+            });
+
+            response.on('end', () => {
+                const body = JSON.parse(data);
+                console.log(body);
+            });
+        });
+        request.on('error', (error) => {
+            console.log(error);
+        });
+        request.end();
     } else {
         response.writeHead(404);
         response.end('Not Found');
