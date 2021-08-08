@@ -15,6 +15,7 @@ function templateHTML(title, list, body) {
       <h1><a href="/">WEB</a></h1>
       ${list}
       <a href="/create">create</a>
+      <a href="/searchItem">Item search</a>
       ${body}
     </body>
   </html>
@@ -91,29 +92,63 @@ var app = http.createServer(function(request, response) {
             var post = qs.parse(body);
             var title = post.title;
             var description = post.description;
-            fs.writeFile(`./data/${title}`, description, 'utf8', function(err) {
+            fs.writeFile(`./data/${title}`, qs.escape(description), 'utf8', function(err) {
                 response.writeHead(302, { Location: `/?id=${title}` });
                 response.end();
             })
         });
+    } else if (pathname === '/searchItem') {
+        fs.readdir('./data', function(error, filelist) {
+            var title = 'WEB - Search';
+            var list = templateList(filelist);
+            var template = templateHTML(title, list, `
+            <form action="http://localhost:3000/cyphers" method="post">
+              <p><input type="text" name="itemName" placeholder="itemName"></p>
+              <p>
+                <input type="submit">
+              </p>
+            </form>
+          `);
+            response.writeHead(200);
+            response.end(template);
+        });
     } else if (pathname === '/cyphers') {
-        let url = `https://api.neople.co.kr/cy/battleitems?itemName=구원의 이기&wordType=<wordType>&limit=<limit>&q=characterId:<characterId>;slotCode:<slotCode>,rarityCode:<rarityCode>,seasonCode:<seasonCode>&apikey=FnaA38BJKLS69mQ9rDx6vEztIr8fbS3y`
-        const request = https.request(url, (response) => {
-            let data = '';
+        var body = '';
+        request.on('data', function(data) {
+            body = body + data;
+        });
+        request.on('end', function() {
+            var post = qs.parse(body);
+            var title = post.itemName;
+            let url = `https://api.neople.co.kr/cy/battleitems?itemName=${qs.escape(title)}&wordType=<wordType>&limit=<limit>&q=characterId:<characterId>;slotCode:<slotCode>,rarityCode:<rarityCode>,seasonCode:<seasonCode>&apikey=FnaA38BJKLS69mQ9rDx6vEztIr8fbS3y`
 
-            response.on('data', (chunk) => {
-                data = data + chunk.toString();
+            const rq = https.request(url, (response) => {
+                let data = '';
+
+                response.on('data', (chunk) => {
+                    data = data + chunk.toString();
+                });
+
+                response.on('end', () => {
+                    const jsonData = JSON.parse(data);
+                    console.log(jsonData);
+                    const items = jsonData.rows;
+                    console.log(items[0].itemName);
+
+                    var itemName = items[0].itemName;
+                    var description = items[0].characterName;
+                    fs.writeFile(`./data/${itemName}`, description, 'utf-8', function(err) {
+                        response.writeHead(302, { Location: `/?id=${title}` });
+                        response.end();
+                    })
+                });
             });
 
-            response.on('end', () => {
-                const body = JSON.parse(data);
-                console.log(body);
+            rq.on('error', (error) => {
+                console.log(error);
             });
+            rq.end();
         });
-        request.on('error', (error) => {
-            console.log(error);
-        });
-        request.end();
     } else {
         response.writeHead(404);
         response.end('Not Found');
